@@ -13,12 +13,13 @@ else:
 import re
 import requests
 import json
+import tqdm
 cny总额=0
 usd总额=0
 有效key列表=list()
 page=input("输入页码:")
 搜索结果=requests.get(f"https://api.github.com/search/issues?q=your key leak author:chinese-leak-key-check&sort=created&order=desc&page={page}",headers=headers).json()["items"]
-for 目标issue in 搜索结果:
+for 目标issue in tqdm.tqdm(搜索结果,desc="搜索结果处理中",unit="结果",position=0):
   try:
     目标issue=目标issue["url"]
     目标body=requests.get(目标issue,headers=headers).json()["body"]
@@ -29,23 +30,23 @@ for 目标issue in 搜索结果:
 
     for i in 匹配的key:
       keys.append(i[0])
-    for i in keys:
+    for i in tqdm.tqdm(keys,leave=False,position=1,desc="疑似api处理中",unit="个api"):
       try:
         res=requests.get("https://api.deepseek.com/user/balance",headers={'Accept': 'application/json','Authorization': f"Bearer {i}"}).json()
         if not res["is_available"]:
-          print("没钱居然")
+          pass
         else:
           有效key列表.append(i)
           for ii in res["balance_infos"]:
-            print(f"有{str(ii["total_balance"])}{ii["currency"]}")
+            tqdm.write(f"有{str(ii["total_balance"])}{ii["currency"]}")
             if ii["currency"]=="CNY":
               cny总额=round(cny总额+float(ii["total_balance"]),2)
             else:
               usd总额=round(usd总额+float(ii["total_balance"]),2)
       except:
-        print("此key无效，下一个")
+        pass
   except:
-    print("此结果异常，下一个")
+    pass
 print(f"cny总额:{cny总额}")
 print(f"usd总额:{usd总额}")
 print("有效key列表:")
